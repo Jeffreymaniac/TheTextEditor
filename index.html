@@ -331,7 +331,8 @@ $(document).ready(function () {
     $("#alphabetize").click(function () {
         var text = $("#editor").val();
         var lines = text.split("\n");
-        lines.sort((a, b) => a.localeCompare(b));
+        lines.sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" });
         $("#editor").val(lines.join("\n"));
     });
 
@@ -339,7 +340,8 @@ $(document).ready(function () {
     $("#alphabetizeComma").click(function () {
         var text = $("#editor").val();
         var items = text.split(",");
-        items.sort((a, b) => a.localeCompare(b));
+        items.sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" });
         $("#editor").val(items.join(","));
     });
 
