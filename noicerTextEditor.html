@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Editor</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+@import url(https://fonts.bunny.net/css?family=archivo:300);
+@import url(https://fonts.bunny.net/css?family=annie-use-your-telescope:400);
+
+        body {
+background: #AA076B;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to right, #61045F, #AA076B);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to right, #61045F, #AA076B); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+color:white;
+        }
+.modal-title, p{color:black!important;}
+        #editor {
+            font-size: 1.45em;
+            line-height: 1.5;
+            width: 80% !important;
+            min-width:50px!important;
+width:90%!important;
+min-height:250px;
+height:100%!important;
+            font-family:Garamond;
+background-color:rgba(255,255,255,0.9);
+color:rgba(0,0,0,0.78);
+}
+#editor::placeholder{
+color:black!important;
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            max-width: 250px;
+width:25%;
+background: #AA076B;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to top, crimson, hotpink);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to top, crimson, hotpink); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+
+            padding-top: 20px;
+            padding-left: 15px;
+            padding-right: 15px;
+            color: white;
+  overflow-y: scroll!important;
+scrollbar-color: rebeccapurple green;
+
+        }
+
+        #sidebar h3 {
+            color: white;
+font-family: 'Annie Use Your Telescope', handwriting;
+font-size:38px;
+font-weight:bolder;
+text-shadow: -6px 1px 5px rgba(30,147,225,0.81);
+
+        }
+
+        #sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            font-family: 'Archivo', sans-serif;
+
+        }
+
+        /* Content area padding to avoid overlap */
+        .content-area {
+margin-left:25vw;
+        }
+
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Sidebar -->
+<div id="sidebar">
+    <h3>Actions</h3>
+    <button id="saveToLocalStorage" class="btn btn-secondary">Save to Local Storage</button>
+    <button id="retrieveFromLocalStorage" class="btn btn-secondary">Retrieve from Local Storage</button>
+    <button id="openEmojiModal" class="btn btn-light">Insert Emoji &amp; Special Characters</button>
+    <button id="openSpecialsModal" class="btn btn-light">Insert Specials (date, year, etc.)</button>
+    <button id="openFontModal" class="btn btn-warning">Change Font to Unicode</button>
+    <h3>List actions</h3>
+    <button id="alphabetize" class="btn btn-info">Alphabetize (Line Breaks)</button>
+    <button id="alphabetizeComma" class="btn btn-info">Alphabetize (Commas)</button>
+    <button id="removeDuplicates" class="btn btn-danger">Remove List Duplicates</button>
+</div>
+
+<!-- Content Area -->
+<div class="content-area container mt-5">
+    <h1 class="mb-4">Text Editor</h1>
+
+    <!-- Buttons for Actions -->
+    <div class="d-flex mt-3">
+
+        <button id="saveAsTxt" class="btn btn-success">Save/download as .txt</button>
+        <button id="importTxt" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#importModal">Import a .txt</button>
+        <button id="copyText" class="btn btn-primary">Copy Text to Clipboard</button>
+    </div>
+
+    <!-- Text Editor Area -->
+    <textarea autofocus id="editor" class="form-control" rows="10" placeholder="Write notes or whatever here..." spellcheck="false" autocapitalize="none" autocorrect="off" ></textarea>
+
+    <!-- Modal for Importing File -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Import .txt File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="file" id="importFile" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="importFileButton" class="btn btn-primary">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal for Specials Picker -->
+    <div class="modal fade" id="specialsModal" tabindex="-1" aria-labelledby="specialsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="specialsModalLabel">Insert special strings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="specials-picker">
+                        <button class="specials-btn" id="specialsYear">current year</button>
+                        <button class="specials-btn" id="specialsMonth">current month</button>
+                        <button class="specials-btn" id="specialsDate">current date</button>
+                        <button class="specials-btn" id="specialsDateL">current date in local format</button>
+                        <button class="specials-btn" id="specialsPi">Pi</button>
+                        <button class="specials-btn" id="specialsUA">User agent</button>
+                        <button class="specials-btn" id="specialsPl">Platform</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Emoji Picker -->
+    <div class="modal fade" id="emojiModal" tabindex="-1" aria-labelledby="emojiModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="emojiModalLabel">Pick an Emoji/special character</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="emoji-picker">
+                        <button class="emoji-btn" data-emoji="𓆉">𓆉</button>
+                        <button class="emoji-btn" data-emoji="☆">☆</button>
+                        <button class="emoji-btn" data-emoji="⚝">⚝</button>
+                        <button class="emoji-btn" data-emoji="(◕‿◕)">(◕‿◕)</button>
+                        <button class="emoji-btn" data-emoji="(≧▽≦)/ ">(≧▽≦)/ </button>
+                        <button class="emoji-btn" data-emoji="¯\(ツ)/¯">¯\(ツ)/¯</button>
+                        <button class="emoji-btn" data-emoji="❝">❝</button>
+                        <button class="emoji-btn" data-emoji="❞">❞</button>
+                        <button class="emoji-btn" data-emoji="🎵">🎵</button>
+                        <button class="emoji-btn" data-emoji="💀">💀</button>
+                        <button class="emoji-btn" data-emoji="🌃">🌃</button>
+                        <button class="emoji-btn" data-emoji="😀">😀</button>
+                        <button class="emoji-btn" data-emoji="😊">😊</button>
+                        <button class="emoji-btn" data-emoji="😂">😂</button>
+                        <button class="emoji-btn" data-emoji="❤️">❤️</button>
+                        <button class="emoji-btn" data-emoji="👍">👍</button>
+                        <button class="emoji-btn" data-emoji="🙌">🙌</button>
+                        <button class="emoji-btn" data-emoji="🎉">🎉</button>
+                        <button class="emoji-btn" data-emoji="😎">😎</button>
+                        <button class="emoji-btn" data-emoji="🌞">🌞</button>
+                        <button class="emoji-btn" data-emoji="🤔">🤔</button>
+                        <button class="emoji-btn" data-emoji="🎶">🎶</button>
+                        <button class="emoji-btn" data-emoji="🦄">🦄</button>
+                        <button class="emoji-btn" data-emoji="😜">😜</button>
+                        <button class="emoji-btn" data-emoji="🌈">🌈</button>
+                        <button class="emoji-btn" data-emoji="👑">👑</button>
+                        <button class="emoji-btn" data-emoji="🔥">🔥</button>
+                        <button class="emoji-btn" data-emoji="🍕">🍕</button>
+                        <button class="emoji-btn" data-emoji="🍩">🍩</button>
+                        <button class="emoji-btn" data-emoji="⭐">⭐</button>
+                        <button class="emoji-btn" data-emoji="🌟">🌟</button>
+                        <button class="emoji-btn" data-emoji="✨">✨</button>
+                        <button class="emoji-btn" data-emoji="💫">💫</button>
+                        <button class="emoji-btn" data-emoji="🌼">🌼</button>
+                        <button class="emoji-btn" data-emoji="🍔">🍔</button>
+                        <button class="emoji-btn" data-emoji="🍣">🍣</button>
+                        <button class="emoji-btn" data-emoji="🍓">🍓</button>
+                        <button class="emoji-btn" data-emoji="🍇">🍇</button>
+                        <button class="emoji-btn" data-emoji="🍉">🍉</button>
+                        <button class="emoji-btn" data-emoji="🍪">🍪</button>
+                        <button class="emoji-btn" data-emoji="🍿">🍿</button>
+                        <button class="emoji-btn" data-emoji="🧃">🧃</button>
+                        <button class="emoji-btn" data-emoji="🌍">🌍</button>
+                        <button class="emoji-btn" data-emoji="🕊️">🕊️</button>
+                        <button class="emoji-btn" data-emoji="💌">💌</button>
+                        <button class="emoji-btn" data-emoji="🧨">🧨</button>
+                        <button class="emoji-btn" data-emoji="🎮">🎮</button>
+                        <button class="emoji-btn" data-emoji="💡">💡</button>
+                        <button class="emoji-btn" data-emoji="⚡">⚡</button>
+                        <button class="emoji-btn" data-emoji="🚀">🚀</button>
+                        <button class="emoji-btn" data-emoji="🎩">🎩</button>
+                        <button class="emoji-btn" data-emoji="🌺">🌺</button>
+                        <button class="emoji-btn" data-emoji="🍒">🍒</button>
+                        <button class="emoji-btn" data-emoji="🌻">🌻</button>
+                        <button class="emoji-btn" data-emoji="🍍">🍍</button>
+                        <button class="emoji-btn" data-emoji="🍑">🍑</button>
+                        <button class="emoji-btn" data-emoji="🐶">🐶</button>
+                        <button class="emoji-btn" data-emoji="🐱">🐱</button>
+                        <button class="emoji-btn" data-emoji="🐨">🐨</button>
+                        <button class="emoji-btn" data-emoji="🐯">🐯</button>
+                        <button class="emoji-btn" data-emoji="🦁">🦁</button>
+                        <button class="emoji-btn" data-emoji="🐰">🐰</button>
+                        <button class="emoji-btn" data-emoji="🦋">🦋</button>
+                        <button class="emoji-btn" data-emoji="🐦">🐦</button>
+                        <button class="emoji-btn" data-emoji="🐠">🐠</button>
+                        <button class="emoji-btn" data-emoji="🌻">🌻</button>
+                        <button class="emoji-btn" data-emoji="🌳">🌳</button>
+                        <button class="emoji-btn" data-emoji="🌾">🌾</button>
+                        <button class="emoji-btn" data-emoji="🌴">🌴</button>
+                        <button class="emoji-btn" data-emoji="🦋">🦋</button>
+                        <button class="emoji-btn" data-emoji="🌙">🌙</button>
+                        <button class="emoji-btn" data-emoji="🌚">🌚</button>
+                        <button class="emoji-btn" data-emoji="🌛">🌛</button>
+                        <button class="emoji-btn" data-emoji="🌍">🌍</button>
+                        <button class="emoji-btn" data-emoji="☁️">☁️</button>
+                        <button class="emoji-btn" data-emoji="🌨️">🌨️</button>
+                        <button class="emoji-btn" data-emoji="🌧️">🌧️</button>
+                        <button class="emoji-btn" data-emoji="🌩️">🌩️</button>
+                        <button class="emoji-btn" data-emoji="⚡">⚡</button>
+                        <button class="emoji-btn" data-emoji="🌀">🌀</button>
+                        <button class="emoji-btn" data-emoji="💨">💨</button>
+                        <button class="emoji-btn" data-emoji="🌫️">🌫️</button>
+                        <button class="emoji-btn" data-emoji="🔥">🔥</button>
+                        <button class="emoji-btn" data-emoji="💧">💧</button>
+                        <button class="emoji-btn" data-emoji="🧊">🧊</button>
+                        <button class="emoji-btn" data-emoji="⇦">⇦</button>
+                        <button class="emoji-btn" data-emoji="⇧">⇧</button>
+                        <button class="emoji-btn" data-emoji="⇨">⇨</button>
+                        <button class="emoji-btn" data-emoji="⇩">⇩</button>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Font Selection -->
+    <div class="modal fade" id="fontModal" tabindex="-1" aria-labelledby="fontModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fontModalLabel">Choose Unicode Font Style</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+<p>Notice: this will change all the normal text you have written to the chosen Unicode font. After you convert the text, it can't be undone, and it doesn't work on text in other Unicode fonts yet, so it won't work if you try to go from Fraktur to Italic, but normal to anything works. </p>
+                    <button class="btn btn-dark" id="frakturBtn">Fraktur (𝔥𝔢𝔩𝔩𝔬)</button>
+                    <button class="btn btn-dark" id="boldBtn">Bold (𝗵𝗲𝗹𝗹𝗼)</button>
+                    <button class="btn btn-dark" id="italicBtn">Italic (𝘩𝘦𝘭𝘭𝘰)</button>
+                    <button class="btn btn-dark" id="scriptBtn">Script (𝒉𝑒𝓁𝓁𝑜)</button>
+                    <button class="btn btn-dark" id="normalBtn">Normal Text (hello)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+$(document).ready(function () {
+    // Copy text to clipboard
+    $("#copyText").click(function () {
+        var text = $("#editor").val();
+        navigator.clipboard.writeText(text).then(function () {
+            alert("Text copied to clipboard!");
+        }, function () {
+            alert("Failed to copy text.");
+        });
+    });
+
+    // Save text as .txt file
+    $("#saveAsTxt").click(function () {
+        var text = $("#editor").val();
+        var filename = prompt("Enter filename (without extension)", "myfile.txt");
+        if (filename) {
+            var blob = new Blob([text], { type: 'text/plain' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+    });
+
+    // Import text from .txt file
+    $("#importFileButton").click(function () {
+        var file = $("#importFile")[0].files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("#editor").val(e.target.result);
+                $("#importModal").modal('hide');
+            };
+            reader.readAsText(file);
+        }
+    });
+
+    // Alphabetize by line breaks
+    $("#alphabetize").click(function () {
+        var text = $("#editor").val();
+        var lines = text.split("\n");
+        lines.sort();
+        $("#editor").val(lines.join("\n"));
+    });
+
+    // Alphabetize by commas
+    $("#alphabetizeComma").click(function () {
+        var text = $("#editor").val();
+        var items = text.split(",");
+        items.sort();
+        $("#editor").val(items.join(","));
+    });
+
+    // Remove duplicates (line breaks or commas)
+    $("#removeDuplicates").click(function () {
+        var text = $("#editor").val();
+
+        // Check if it's a list separated by commas or line breaks
+        if (text.includes("\n")) {
+            // Handle line-break-separated lists
+            var lines = text.split("\n");
+            var uniqueLines = [...new Set(lines)];
+            $("#editor").val(uniqueLines.join("\n"));
+        } else if (text.includes(",")) {
+            // Handle comma-separated lists
+            var items = text.split(",");
+            var uniqueItems = [...new Set(items)];
+            $("#editor").val(uniqueItems.join(","));
+        } else {
+            alert("Text must be a list separated by commas or line breaks.");
+        }
+    });
+
+    // Save text to local storage
+    $("#saveToLocalStorage").click(function () {
+        var text = $("#editor").val();
+        localStorage.setItem('editorNote', text);
+        alert("Text saved to local storage!");
+    });
+
+    // Retrieve text from local storage
+    $("#retrieveFromLocalStorage").click(function () {
+        var savedText = localStorage.getItem('editorNote');
+        if (savedText) {
+            $("#editor").val(savedText);
+        } else {
+            alert("No saved text found in local storage.");
+        }
+    });
+
+    // Open emoji modal
+    $("#openEmojiModal").click(function () {
+        $("#emojiModal").modal('show');
+    });
+
+    // Open specials modal
+    $("#openSpecialsModal").click(function () {
+        $("#specialsModal").modal('show');
+document.getElementById("specialsYear").innerHTML = "current year ("+new Date().getFullYear() + ")";
+document.getElementById("specialsYear").setAttribute("data-specials", new Date().getFullYear());
+let spMonth = ["January","February","March","April","May","June","July","August","September","October","November","December"][new Date().getMonth()];
+document.getElementById("specialsMonth").innerHTML = "current month ("+spMonth + ")";
+document.getElementById("specialsMonth").setAttribute("data-specials", spMonth);
+document.getElementById("specialsDate").innerHTML = "current date ("+new Date() + ")";
+document.getElementById("specialsDate").setAttribute("data-specials", new Date());
+document.getElementById("specialsDateL").innerHTML = "current date in local format ("+new Date().toLocaleString() + ")";
+document.getElementById("specialsDateL").setAttribute("data-specials", new Date().toLocaleString());
+document.getElementById("specialsPi").innerHTML = "Pi ("+Math.PI + ")";
+document.getElementById("specialsPi").setAttribute("data-specials", Math.PI);
+document.getElementById("specialsUA").innerHTML = "User agent ("+navigator.userAgent + ")";
+document.getElementById("specialsUA").setAttribute("data-specials", navigator.userAgent);
+document.getElementById("specialsPl").innerHTML = "Platform ("+navigator.platform + ")";
+document.getElementById("specialsPl").setAttribute("data-specials", navigator.platform);
+    });
+
+    // Insert specials into the editor
+    $(".specials-btn").click(function () {
+        var specials = $(this).data("specials");
+        var currentText = $("#editor").val();
+        $("#editor").val(currentText + specials);
+        $("#specialsModal").modal('hide');
+    });
+
+    // Insert emoji into the editor
+    $(".emoji-btn").click(function () {
+        var emoji = $(this).data("emoji");
+        var currentText = $("#editor").val();
+        $("#editor").val(currentText + emoji);
+        $("#emojiModal").modal('hide');
+    });
+
+    // Open Font modal
+    $("#openFontModal").click(function () {
+        $("#fontModal").modal('show');
+    });
+
+    // Font style change event handlers
+    $("#frakturBtn").click(function () {
+        var text = $("#editor").val();
+        var frakturText = toFraktur(text);
+        $("#editor").val(frakturText);
+        $("#fontModal").modal('hide');
+    });
+
+    $("#boldBtn").click(function () {
+        var text = $("#editor").val();
+        var boldText = toBold(text);
+        $("#editor").val(boldText);
+        $("#fontModal").modal('hide');
+    });
+
+    $("#italicBtn").click(function () {
+        var text = $("#editor").val();
+        var italicText = toItalic(text);
+        $("#editor").val(italicText);
+        $("#fontModal").modal('hide');
+    });
+
+    $("#scriptBtn").click(function () {
+        var text = $("#editor").val();
+        var scriptText = toScript(text);
+        $("#editor").val(scriptText);
+        $("#fontModal").modal('hide');
+    });
+
+    $("#normalBtn").click(function () {
+        var text = $("#editor").val();
+        $("#editor").val(text);  // Reverts back to normal
+        $("#fontModal").modal('hide');
+    });
+
+    // Convert text to Fraktur font
+    function toFraktur(text) {
+        const frakturMap = {
+            'a': '𝔞', 'b': '𝔟', 'c': '𝔠', 'd': '𝔡', 'e': '𝔢', 'f': '𝔣', 'g': '𝔤', 'h': '𝔥', 'i': '𝔦', 'j': '𝔧',
+            'k': '𝔨', 'l': '𝔩', 'm': '𝔪', 'n': '𝔫', 'o': '𝔬', 'p': '𝔭', 'q': '𝔮', 'r': '𝔯', 's': '𝔰', 't': '𝔱',
+            'u': '𝔲', 'v': '𝔳', 'w': '𝔴', 'x': '𝔵', 'y': '𝔶', 'z': '𝔷', 
+            'A': '𝔄', 'B': '𝔅', 'C': 'ℭ', 'D': '𝔇', 'E': '𝔈', 'F': '𝔉', 'G': '𝔊', 'H': 'ℌ', 'I': 'ℑ', 'J': '𝔍',
+            'K': '𝔎', 'L': '𝔏', 'M': '𝔐', 'N': '𝔑', 'O': '𝔒', 'P': 'ℙ', 'Q': 'ℚ', 'R': 'ℝ', 'S': '𝔖', 'T': '𝔗',
+            'U': '𝔘', 'V': '𝔙', 'W': '𝔚', 'X': '𝔛', 'Y': '𝔜', 'Z': 'ℨ',
+        };
+        return text.split('').map(c => frakturMap[c] || c).join('');
+    }
+
+    // Convert text to Bold font
+    function toBold(text) {
+        const boldMap = {
+            'a': '𝗮', 'b': '𝗯', 'c': '𝗰', 'd': '𝗱', 'e': '𝗲', 'f': '𝗳', 'g': '𝗴', 'h': '𝗵', 'i': '𝗶', 'j': '𝗷',
+            'k': '𝗸', 'l': '𝗹', 'm': '𝗺', 'n': '𝗻', 'o': '𝗼', 'p': '𝗽', 'q': '𝗾', 'r': '𝗿', 's': '𝘀', 't': '𝘁',
+            'u': '𝘂', 'v': '𝘃', 'w': '𝘄', 'x': '𝘅', 'y': '𝘆', 'z': '𝘇',
+            'A': '𝗔', 'B': '𝗕', 'C': '𝗖', 'D': '𝗗', 'E': '𝗘', 'F': '𝗙', 'G': '𝗚', 'H': '𝗛', 'I': '𝗜', 'J': '𝗝',
+            'K': '𝗞', 'L': '𝗟', 'M': '𝗠', 'N': '𝗡', 'O': '𝗢', 'P': '𝗣', 'Q': '𝗤', 'R': '𝗥', 'S': '𝗦', 'T': '𝗧',
+            'U': '𝗨', 'V': '𝗩', 'W': '𝗪', 'X': '𝗫', 'Y': '𝗬', 'Z': '𝗭'
+        };
+        return text.split('').map(c => boldMap[c] || c).join('');
+    }
+
+    // Convert text to Italic font
+    function toItalic(text) {
+        const italicMap = {
+            'a': '𝘢', 'b': '𝘣', 'c': '𝘤', 'd': '𝘥', 'e': '𝘦', 'f': '𝘧', 'g': '𝘨', 'h': '𝘩', 'i': '𝘪', 'j': '𝘫',
+            'k': '𝘬', 'l': '𝘭', 'm': '𝘮', 'n': '𝘯', 'o': '𝘰', 'p': '𝘱', 'q': '𝘲', 'r': '𝘳', 's': '𝘴', 't': '𝘵',
+            'u': '𝘶', 'v': '𝘷', 'w': '𝘸', 'x': '𝘹', 'y': '𝘺', 'z': '𝘻',
+            'A': '𝘈', 'B': '𝘉', 'C': '𝘊', 'D': '𝘋', 'E': '𝘌', 'F': '𝘍', 'G': '𝘎', 'H': '𝘏', 'I': '𝘐', 'J': '𝘑',
+            'K': '𝘒', 'L': '𝘓', 'M': '𝘔', 'N': '𝘕', 'O': '𝘖', 'P': '𝘗', 'Q': '𝘘', 'R': '𝘙', 'S': '𝘚', 'T': '𝘛',
+            'U': '𝘜', 'V': '𝘝', 'W': '𝘞', 'X': '𝘟', 'Y': '𝘠', 'Z': '𝘡'
+        };
+        return text.split('').map(c => italicMap[c] || c).join('');
+    }
+
+    // Convert text to Script font
+    function toScript(text) {
+        const scriptMap = {
+            'a': '𝒶', 'b': '𝒷', 'c': '𝒸', 'd': '𝒹', 'e': 'ℯ', 'f': '𝒻', 'g': 'ℊ', 'h': '𝒽', 'i': '𝒾', 'j': '𝒿',
+            'k': '𝓀', 'l': '𝓁', 'm': '𝓂', 'n': '𝓃', 'o': 'ℴ', 'p': '𝓅', 'q': '𝓆', 'r': '𝓇', 's': '𝓈', 't': '𝓉',
+            'u': '𝓊', 'v': '𝓋', 'w': '𝓌', 'x': '𝓍', 'y': '𝓎', 'z': '𝓏',
+            'A': '𝒜', 'B': 'ℬ', 'C': '𝒞', 'D': '𝒟', 'E': 'ℰ', 'F': 'ℱ', 'G': '𝒢', 'H': 'ℋ', 'I': 'ℐ', 'J': '𝒥',
+            'K': '𝒦', 'L': '𝒧', 'M': 'ℳ', 'N': '𝒩', 'O': '𝒪', 'P': '𝒫', 'Q': '𝒬', 'R': 'ℛ', 'S': '𝒮', 'T': '𝒯',
+            'U': '𝒰', 'V': '𝒱', 'W': '𝒲', 'X': '𝒳', 'Y': '𝒴', 'Z': 'ℵ'
+        };
+        return text.split('').map(c => scriptMap[c] || c).join('');
+    }
+});
+</script>
+
+</body>
+</html>
